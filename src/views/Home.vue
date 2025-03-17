@@ -1,4 +1,3 @@
-
 <template>
 	<div>
 	  <h1>Member Performance Card</h1>
@@ -16,39 +15,62 @@
   </template>
   
   <script>
+  import axios from "axios";
+  
   export default {
 	name: "PerformanceCard",
 	data() {
 	  return {
 		memberId: "",
 		performanceCardHtml: "",
+		// Store your Frappe API credentials (ideally load these from a secure source)
+		apiKey: "c0e5d5e0ba6c6a4",
+		apiSecret: "a03f5dd0feee5b4"
 	  };
 	},
 	methods: {
-	  getPerformanceCard() {
+	  async getPerformanceCard() {
 		if (!this.memberId) {
 		  alert("Please enter a Member ID");
 		  return;
 		}
-		// Call Frappe backend method with the entered Member ID
-		frappe.call({
-		  method: "rb.rb.doctype.member.member.get_member_html_data",
-		  args: {
-			member_id: this.memberId,
-		  },
-		  callback: (r) => {
-			if (r.message && r.message.status) {
-			  // Generate HTML for the performance card using data from the response
-			  this.performanceCardHtml = this.generateMemberHTML(
-				r.message.current_bonus_points,
-				r.message.active_score,
-				r.message.old_score_summary
-			  );
-			} else {
-			  frappe.msgprint("Failed to load member data.");
+		
+		// Construct the API endpoint URL.
+		// Replace <FRAPPE_HOST> and <FRAPPE_PORT> with your actual host and port.
+		const apiUrl = `http://192.168.1.7:8036/api/method/rb.rb.doctype.member.member.get_member_html_data`;
+		console.log("API URL:", apiUrl);
+  
+		// Create the auth token in the format required by Frappe
+		const authToken = `token ${this.apiKey}:${this.apiSecret}`;
+		console.log("Auth Token:", authToken);
+  
+		try {
+		  const response = await axios.post(
+			apiUrl,
+			{
+			  member_id: this.memberId,
+			},
+			{
+			  headers: {
+				Authorization: authToken,
+			  },
 			}
-		  },
-		});
+		  );
+  
+		  // Check if the response contains a successful message.
+		  if (response.data.message && response.data.message.status) {
+			this.performanceCardHtml = this.generateMemberHTML(
+			  response.data.message.current_bonus_points,
+			  response.data.message.active_score,
+			  response.data.message.old_score_summary
+			);
+		  } else {
+			alert("Failed to load member data.");
+		  }
+		} catch (error) {
+		  console.error("API call error:", error);
+		  alert("Error calling API");
+		}
 	  },
 	  generateMemberHTML(bonusPoints, activeScore, activeScoreVariants) {
 		// Begin generating the HTML content
@@ -69,10 +91,11 @@
 		  <br>
 		`;
 		
-		
 		// Process old score summary variants if available
 		if (activeScoreVariants && typeof activeScoreVariants === "object") {
-		  const variantsArray = Object.entries(activeScoreVariants).map(([type, points]) => ({ type, points }));
+		  const variantsArray = Object.entries(activeScoreVariants).map(
+			([type, points]) => ({ type, points })
+		  );
 		  
 		  if (variantsArray.length > 0) {
 			htmlContent += '<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">';
@@ -116,7 +139,6 @@
   }
   </style>
   
-
 
 
 
