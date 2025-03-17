@@ -69,6 +69,7 @@
 		  <br>
 		`;
 		
+		
 		// Process old score summary variants if available
 		if (activeScoreVariants && typeof activeScoreVariants === "object") {
 		  const variantsArray = Object.entries(activeScoreVariants).map(([type, points]) => ({ type, points }));
